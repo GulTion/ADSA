@@ -101,6 +101,10 @@ void printMatrix(const vector<vector<double>> &matrix, const string &name) {
 }
 
 int main() {
+	#ifndef ONLINE_JUDGE
+        freopen("input.txt", "r", stdin);
+        freopen("output.txt", "w", stdout);
+    #endif
     vector<vector<double>> A;
     vector<double> B;
 

@@ -70,6 +70,10 @@ void Graph::SCC() {
 }
 
 int main() {
+	#ifndef ONLINE_JUDGE
+        freopen("input.txt", "r", stdin);
+        freopen("output.txt", "w", stdout);
+    #endif
     int V; // Number of vertices
     cout << "Enter the number of vertices: ";
     cin >> V; // Read the number of vertices

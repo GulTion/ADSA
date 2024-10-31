@@ -1,35 +1,43 @@
 #include <iostream>
 #include <vector>
-#include <climits>
 #include <queue>
-#include <sstream>
+#include <functional>
+#include <limits>
 
 using namespace std;
 
-struct Edge {
-    int v;
-    int weight;
-};
+struct Edge { int v, weight; };
 
 class Graph {
-    int V; 
-    vector<vector<Edge>> adj; 
+    int V;
+    vector<vector<Edge>> adj;
 
 public:
     Graph(int V) : V(V), adj(V) {}
 
     void addEdge(int u, int v, int weight) {
+        if (u < 0 || v < 0 || u >= V || v >= V) {
+            cout << "Invalid edge from " << u << " to " << v << endl;
+            return;
+        }
+        if (weight < 0) {
+            cout << "Negative weights are not allowed for Dijkstra's algorithm." << endl;
+            return;
+        }
         adj[u].push_back({v, weight});
     }
 
     void dijkstra(int src) {
+        if (src < 0 || src >= V) {
+            cout << "Invalid source vertex: " << src << endl;
+            return;
+        }
+
         vector<int> dist(V, INT_MAX);
         vector<bool> visited(V, false);
-        typedef pair<int, int> pii;
-        priority_queue<pii, vector<pii>, greater<pii>> pq;
-
-        pq.push(pii(0, src));
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
         dist[src] = 0;
+        pq.push({0, src});
 
         while (!pq.empty()) {
             int u = pq.top().second;
@@ -38,47 +46,46 @@ public:
             if (visited[u]) continue;
             visited[u] = true;
 
-            for (const Edge& edge : adj[u]) {
-                int v = edge.v;
-                int weight = edge.weight;
-                if (dist[u] != INT_MAX && dist[u] + weight < dist[v]) {
+            for (const auto& edge : adj[u]) {
+                int v = edge.v, weight = edge.weight;
+                if (!visited[v] && dist[u] != INT_MAX && dist[u] + weight < dist[v]) {
                     dist[v] = dist[u] + weight;
-                    pq.push(pii(dist[v], v));
+                    pq.push({dist[v], v});
                 }
             }
         }
 
-        cout << "Vertex Distance from Source" << endl;
-        for (int i = 0; i < V; ++i) {
-            stringstream ss;
-            ss << dist[i];
-            string distance = (dist[i] == INT_MAX) ? "INF" : ss.str();
-            cout << i << "\t\t" << distance << endl;
-        }
+        for (int i = 0; i < V; ++i)
+            cout << "Vertex " << i << " \t Distance: " << (dist[i] == INT_MAX ? "INF" : to_string(dist[i])) << endl;
     }
 };
 
 int main() {
-    int V; // Number of vertices
-    cout << "Enter the number of vertices: ";
-    cin >> V;
-
-    Graph g(V);
-
-    int numEdges;
-    cout << "Enter the number of edges: ";
-    cin >> numEdges;
-
-    cout << "Enter the edges in the format (u v weight):" << endl;
-    for (int i = 0; i < numEdges; ++i) {
-        int u, v, weight;
-        cin >> u >> v >> weight; // Read edges
-        g.addEdge(u, v, weight);
+    #ifndef ONLINE_JUDGE
+        freopen("input.txt", "r", stdin);
+        freopen("output.txt", "w", stdout);
+    #endif
+    int V, E;
+    cin >> V >> E;
+    if (V <= 0) {
+        cout << "Number of vertices must be positive." << endl;
+        return 0;
+    }
+    if (E < 0) {
+        cout << "Number of edges cannot be negative." << endl;
+        return 0;
     }
 
-    cout << "Running Dijkstra's algorithm from source vertex " << 0 << endl;
-    g.dijkstra(0);
-
+    Graph g(V);
+    for (int i = 0; i < E; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        g.addEdge(u, v, w);
+    }
+    int src;
+    cout << "Enter source vertex: ";
+    cin >> src;
+    g.dijkstra(src);
     return 0;
 }
 

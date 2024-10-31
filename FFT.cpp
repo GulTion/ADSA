@@ -8,7 +8,7 @@ using namespace std;
 typedef complex<double> Complex;
 const double PI = acos(-1);
 
-void fft(vector<Complex>& x) {
+void fft(vector<Complex>& x, bool invert) {
     int N = x.size();
     if (N <= 1) return;
 
@@ -18,70 +18,95 @@ void fft(vector<Complex>& x) {
         odd[i] = x[i * 2 + 1];
     }
 
-    fft(even);
-    fft(odd);
+    fft(even, invert);
+    fft(odd, invert);
+
+    double angle = 2 * PI / N * (invert ? -1 : 1);
+    Complex w(1), wn(cos(angle), sin(angle));
 
     for (int k = 0; k < N / 2; k++) {
-        Complex t = polar(1.0, -2 * PI * k / N) * odd[k];
+        Complex t = w * odd[k];
         x[k] = even[k] + t;
         x[k + N / 2] = even[k] - t;
+        if (invert) {
+            x[k] /= 2;
+            x[k + N / 2] /= 2;
+        }
+        w *= wn;
     }
 }
 
-vector<Complex> multiplyPolynomials(const vector<double>& a, const vector<double>& b) {
-    int n = a.size() + b.size() - 1;
-    int m = 1;
-    while (m < n) m *= 2; 
+vector<double> multiplyPolynomials(const vector<double>& a, const vector<double>& b) {
+    int n = 1;
+    while (n < a.size() + b.size()) n *= 2;
 
-    vector<Complex> fa(m), fb(m);
-    for (size_t i = 0; i < a.size(); i++) fa[i] = a[i];
-    for (size_t i = 0; i < b.size(); i++) fb[i] = b[i];
+    vector<Complex> fa(a.begin(), a.end()), fb(b.begin(), b.end());
+    fa.resize(n);
+    fb.resize(n);
 
-    fft(fa);
-    fft(fb);
+    fft(fa, false);
+    fft(fb, false);
 
-    vector<Complex> result(m);
-    for (int i = 0; i < m; i++) {
-        result[i] = fa[i] * fb[i];
-        result[i] = round(result[i].real());
-    }
+    for (int i = 0; i < n; i++)
+        fa[i] *= fb[i];
+
+    fft(fa, true);
+
+    vector<double> result(n);
+    for (int i = 0; i < n; i++)
+        result[i] = round(fa[i].real());
 
     return result;
 }
 
-int main() {
+int main() {	
+	#ifndef ONLINE_JUDGE
+        freopen("input.txt", "r", stdin);
+        freopen("output.txt", "w", stdout);
+    #endif
     int degree1, degree2;
-
-    // Input for the first polynomial
     cout << "Enter the degree of the first polynomial: ";
     cin >> degree1;
+    if (degree1 < 0) {
+        cout << "Degree must be non-negative." << endl;
+        return 0;
+    }
 
     vector<double> poly1(degree1 + 1);
     cout << "Enter the coefficients of the first polynomial (from constant term to highest degree): ";
     for (int i = 0; i <= degree1; i++) {
-        cin >> poly1[i]; // Read coefficients of the first polynomial
+        cin >> poly1[i];
     }
 
-    // Input for the second polynomial
     cout << "Enter the degree of the second polynomial: ";
     cin >> degree2;
+    if (degree2 < 0) {
+        cout << "Degree must be non-negative." << endl;
+        return 0;
+    }
 
     vector<double> poly2(degree2 + 1);
     cout << "Enter the coefficients of the second polynomial (from constant term to highest degree): ";
     for (int i = 0; i <= degree2; i++) {
-        cin >> poly2[i]; // Read coefficients of the second polynomial
+        cin >> poly2[i];
     }
 
-    // Perform polynomial multiplication
-    vector<Complex> result = multiplyPolynomials(poly1, poly2);
+    vector<double> result = multiplyPolynomials(poly1, poly2);
 
-    // Output the resultant polynomial
     cout << "Resultant polynomial coefficients: " << endl;
-    for (const auto& coeff : result) {
-        cout << coeff << " ";
+    for (size_t i = 0; i < result.size(); i++) {
+        if (result[i] != 0 || i == 0)
+            cout << result[i] << " ";
     }
     cout << endl;
 
     return 0;
 }
 
+
+//2
+//1 2 3
+//1
+//4 5
+
+//4 13 22 15 
